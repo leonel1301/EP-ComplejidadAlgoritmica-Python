@@ -1,0 +1,53 @@
+import networkx as nx
+import matplotlib.pyplot as plt
+
+def floyd_warshall(distancia, num):
+    dist_copy = [row[:] for row in distancia]
+    for k in range(num):
+        for i in range(num):
+            for j in range(num):
+                dist_copy[i][j] = min(dist_copy[i][j], dist_copy[i][k] + dist_copy[k][j])
+        distancia = [row[:] for row in dist_copy]
+
+
+def find_neighbors(distancia, num):
+    neighbours = []
+    for i in range(num):
+        for j in range(i + 1, num):
+            for k in range(num):
+                if k != i and k != j and distancia[i][j] == distancia[i][k] + distancia[k][j]:
+                    neighbours.append((i + 1, j + 1))
+                    break
+    return neighbours
+
+
+with open('tabla_caminos.txt') as f:
+    t = int(f.readline())
+    for _ in range(t):
+        num_nodos = int(f.readline())
+        dist = [list(map(int, f.readline().split())) for _ in range(num_nodos)]
+
+    floyd_warshall(dist, num_nodos)
+
+    neighbors = set()
+    for i in range(num_nodos):
+        for j in range(i + 1, num_nodos):
+            for k in range(num_nodos):
+                if k != i and k != j and dist[i][j] == dist[i][k] + dist[k][j]:
+                    neighbors.add((i + 1, k + 1))
+                    neighbors.add((k + 1, j + 1))
+                    break
+
+    G = nx.Graph()
+    for i in range(num_nodos):
+        G.add_node(i + 1)
+    for i in range(num_nodos):
+        for j in range(i + 1, num_nodos):
+            if dist[i][j] < float("inf"):
+                G.add_edge(i + 1, j + 1, weight=dist[i][j])
+
+    pos = nx.spring_layout(G)
+    nx.draw(G, pos, with_labels=True)
+    labels = nx.get_edge_attributes(G, 'weight')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=labels)
+    plt.show()
